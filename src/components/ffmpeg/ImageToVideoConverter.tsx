@@ -4,44 +4,35 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { ImageIcon, PlayIcon, UploadIcon } from 'lucide-react';
+import { PlayIcon, UploadIcon } from 'lucide-react';
 import { useFFmpeg } from './FFmpegProvider';
 import { LogView } from './LogView';
+import { ImagePreviewAndSort } from './ImagePreviewAndSort';
+
+interface ImageFile extends File {
+  preview: string;
+}
 
 export const ImageToVideoConverter = () => {
   const { ffmpeg, isLoading, log, latestLog, progress, addLog } = useFFmpeg();
-  
+
   // 图片转视频状态
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [selectedImages, setSelectedImages] = useState<ImageFile[]>([]);
   const [isTranscoding, setIsTranscoding] = useState(false);
   const [outputVideo, setOutputVideo] = useState<string>("");
-  const [previewImage, setPreviewImage] = useState<string>("");
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    const imageFiles: File[] = [];
-    for (let i = 0; i < files.length; i++) {
-      if (files[i].type.startsWith('image/')) {
-        imageFiles.push(files[i]);
-      }
-    }
+    const newImageFiles: ImageFile[] = Array.from(files)
+      .filter(file => file.type.startsWith('image/'))
+      .map(file => Object.assign(file, {
+        preview: URL.createObjectURL(file)
+      }));
 
-    setSelectedImages(imageFiles);
-
-    // 预览第一张图片
-    if (imageFiles.length > 0) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          setPreviewImage(e.target.result as string);
-        }
-      };
-      reader.readAsDataURL(imageFiles[0]);
-    }
-
-    addLog(`[App] 已选择 ${imageFiles.length} 张图片`);
+    setSelectedImages(prev => [...prev, ...newImageFiles]);
+    addLog(`[App] 已选择 ${newImageFiles.length} 张图片`);
   };
 
   const handleTranscode = async () => {
@@ -67,7 +58,7 @@ export const ImageToVideoConverter = () => {
         '-framerate', '1',
         '-i', 'image_%05d.png',
         '-c:v', 'libx264',
-        '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
+        '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', // 确保宽度和高度是偶数
         '-pix_fmt', 'yuv420p',
         'output.mp4',
       ]);
@@ -115,7 +106,7 @@ export const ImageToVideoConverter = () => {
           {/* 图片上传区域 */}
           <div className="space-y-2">
             <Label htmlFor="images" className="text-slate-300">选择图片</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="flex flex-col gap-2">
                 <div className="relative">
                   <Input
@@ -140,17 +131,8 @@ export const ImageToVideoConverter = () => {
                 </p>
               </div>
 
-              {/* 图片预览 */}
-              <div className="flex items-center justify-center bg-black/30 rounded-md h-[150px] overflow-hidden">
-                {previewImage ? (
-                  <img src={previewImage} alt="Preview" className="max-h-full max-w-full object-contain" />
-                ) : (
-                  <div className="flex flex-col items-center text-slate-500">
-                    <ImageIcon className="h-10 w-10 mb-2" />
-                    <span className="text-xs">图片预览</span>
-                  </div>
-                )}
-              </div>
+              {/* 图片预览和排序 */}
+              <ImagePreviewAndSort selectedImages={selectedImages} setSelectedImages={setSelectedImages} />
             </div>
           </div>
 
