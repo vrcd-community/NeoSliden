@@ -8,16 +8,14 @@ import { PlayIcon, UploadIcon } from 'lucide-react';
 import { useFFmpeg } from './FFmpegProvider';
 import { LogView } from './LogView';
 import { ImagePreviewAndSort } from './ImagePreviewAndSort';
+import { useImageContext, type ImageItem } from '@/lib/ImageContext';
 
-interface ImageFile extends File {
-  preview: string;
-}
-
-export const ImageToVideoConverter = () => {
+export const ImageToVideoConverter: React.FC = () => {
   const { ffmpeg, isLoading, log, latestLog, progress, addLog } = useFFmpeg();
+  const { images: contextImages, setImages: setContextImages } = useImageContext();
 
   // 图片转视频状态
-  const [selectedImages, setSelectedImages] = useState<ImageFile[]>([]);
+  const [selectedImages, setSelectedImages] = useState<ImageItem[]>(contextImages);
   const [isTranscoding, setIsTranscoding] = useState(false);
   const [outputVideo, setOutputVideo] = useState<string>("");
 
@@ -25,13 +23,15 @@ export const ImageToVideoConverter = () => {
     const files = e.target.files;
     if (!files) return;
 
-    const newImageFiles: ImageFile[] = Array.from(files)
+    const newImageFiles: ImageItem[] = Array.from(files)
       .filter(file => file.type.startsWith('image/'))
-      .map(file => Object.assign(file, {
-        preview: URL.createObjectURL(file)
+      .map(file => ({
+        name: file.name,
+        src: URL.createObjectURL(file)
       }));
 
     setSelectedImages(prev => [...prev, ...newImageFiles]);
+    setContextImages([...contextImages, ...newImageFiles]);
     addLog(`[App] 已选择 ${newImageFiles.length} 张图片`);
   };
 
@@ -48,7 +48,7 @@ export const ImageToVideoConverter = () => {
       // 写入所有图片
       for (let i = 0; i < selectedImages.length; i++) {
         const imageName = `image_${i.toString().padStart(5, '0')}.png`;
-        await ffmpeg.writeFile(imageName, await fetchFile(selectedImages[i]));
+        await ffmpeg.writeFile(imageName, await fetchFile(selectedImages[i].src));
         addLog(`[App] 处理图片 ${i + 1}/${selectedImages.length}`);
       }
 

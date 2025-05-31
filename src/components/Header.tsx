@@ -12,6 +12,7 @@ export default function Header() {
 
   const navigationItems = [
     { name: 'Home', href: '/' },
+    { name: "PDF转图片", href: "/pdf2img" },
     { name: "VRCD", href: "https://vrcd.org.cn" }
   ]
 

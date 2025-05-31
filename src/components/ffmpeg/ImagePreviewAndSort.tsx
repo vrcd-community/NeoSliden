@@ -2,14 +2,11 @@ import { useCallback, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { XIcon } from 'lucide-react';
-
-interface ImageFile extends File {
-  preview: string;
-}
+import { type ImageItem } from '@/lib/ImageContext';
 
 interface ImagePreviewAndSortProps {
-  selectedImages: ImageFile[];
-  setSelectedImages: React.Dispatch<React.SetStateAction<ImageFile[]>>;
+  selectedImages: ImageItem[];
+  setSelectedImages: React.Dispatch<React.SetStateAction<ImageItem[]>>;
 }
 
 export const ImagePreviewAndSort: React.FC<ImagePreviewAndSortProps> = ({
@@ -24,7 +21,7 @@ export const ImagePreviewAndSort: React.FC<ImagePreviewAndSortProps> = ({
   const handleRemoveImage = useCallback((index: number) => {
     setSelectedImages(prev => {
       const newImages = [...prev];
-      URL.revokeObjectURL(newImages[index].preview);
+      URL.revokeObjectURL(newImages[index].src);
       newImages.splice(index, 1);
       return newImages;
     });
@@ -115,7 +112,7 @@ export const ImagePreviewAndSort: React.FC<ImagePreviewAndSortProps> = ({
       >
         {selectedImages.map((image, index) => (
           <div
-            key={`${image.name}-${index}`}
+            key={`${image}-${index}`}
             draggable
             onDragStart={(e) => handleDragStart(e, index)}
             onDragEnter={() => handleDragEnter(index)}
@@ -128,7 +125,7 @@ export const ImagePreviewAndSort: React.FC<ImagePreviewAndSortProps> = ({
             }`}
           >
             <img
-              src={image.preview}
+              src={image.src}
               alt={image.name}
               className="w-full h-full object-cover"
             />

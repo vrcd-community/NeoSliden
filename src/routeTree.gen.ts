@@ -11,9 +11,16 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as Pdf2imgImport } from './routes/pdf2img'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
+
+const Pdf2imgRoute = Pdf2imgImport.update({
+  id: '/pdf2img',
+  path: '/pdf2img',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const IndexRoute = IndexImport.update({
   id: '/',
@@ -32,6 +39,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/pdf2img': {
+      id: '/pdf2img'
+      path: '/pdf2img'
+      fullPath: '/pdf2img'
+      preLoaderRoute: typeof Pdf2imgImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -39,32 +53,37 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/pdf2img': typeof Pdf2imgRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/pdf2img': typeof Pdf2imgRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/pdf2img': typeof Pdf2imgRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/pdf2img'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/pdf2img'
+  id: '__root__' | '/' | '/pdf2img'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  Pdf2imgRoute: typeof Pdf2imgRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  Pdf2imgRoute: Pdf2imgRoute,
 }
 
 export const routeTree = rootRoute
@@ -77,11 +96,15 @@ export const routeTree = rootRoute
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
-        "/"
+        "/",
+        "/pdf2img"
       ]
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/pdf2img": {
+      "filePath": "pdf2img.tsx"
     }
   }
 }
