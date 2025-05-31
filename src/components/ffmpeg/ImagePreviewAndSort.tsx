@@ -16,12 +16,9 @@ export const ImagePreviewAndSort: React.FC<ImagePreviewAndSortProps> = ({
   selectedImages,
   setSelectedImages,
 }) => {
-  // FIXME: isDraggingOver 这个变量删除后，拖拽时就不显示蓝色边框了..?
-
   const dragItem = useRef<number | null>(null);
-  const dragOverItem = useRef<number | null>(null);
+  const [dragOverItem, setDragOverItem] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
   const dragImageRef = useRef<HTMLDivElement | null>(null);
 
   const handleRemoveImage = useCallback((index: number) => {
@@ -50,6 +47,10 @@ export const ImagePreviewAndSort: React.FC<ImagePreviewAndSortProps> = ({
     dragImage.style.height = `${rect.height}px`;
     dragImage.style.zIndex = '10000';
     dragImage.style.pointerEvents = 'none';
+    dragImage.style.border = '2px solid #3b82f6';
+    dragImage.style.borderRadius = '0.375rem';
+    dragImage.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+    dragImage.style.opacity = '0.8';
     
     // 克隆整个元素内容
     const contentClone = target.cloneNode(true) as HTMLDivElement;
@@ -67,17 +68,16 @@ export const ImagePreviewAndSort: React.FC<ImagePreviewAndSortProps> = ({
   }, []);
 
   const handleDragEnter = useCallback((index: number) => {
-    dragOverItem.current = index;
+    setDragOverItem(index);
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setIsDraggingOver(true);
   }, []);
 
   const handleDragEnd = useCallback(() => {
     setDragging(false);
-    setIsDraggingOver(false);
+    setDragOverItem(null);
     
     // 清理自定义拖动图像
     if (dragImageRef.current) {
@@ -85,7 +85,7 @@ export const ImagePreviewAndSort: React.FC<ImagePreviewAndSortProps> = ({
       dragImageRef.current = null;
     }
     
-    if (dragItem.current !== null && dragOverItem.current !== null && dragItem.current !== dragOverItem.current) {
+    if (dragItem.current !== null && dragOverItem !== null && dragItem.current !== dragOverItem) {
       setSelectedImages(prev => {
         const newImages = [...prev];
         const draggedItem = newImages[dragItem.current!];
@@ -93,15 +93,14 @@ export const ImagePreviewAndSort: React.FC<ImagePreviewAndSortProps> = ({
         // 移除原位置的元素
         newImages.splice(dragItem.current!, 1);
         // 插入到新位置
-        newImages.splice(dragOverItem.current!, 0, draggedItem);
+        newImages.splice(dragOverItem, 0, draggedItem);
         
         return newImages;
       });
     }
     
     dragItem.current = null;
-    dragOverItem.current = null;
-  }, [setSelectedImages]);
+  }, [setSelectedImages, dragOverItem]);
 
   if (selectedImages.length === 0) {
     return null;
@@ -111,20 +110,19 @@ export const ImagePreviewAndSort: React.FC<ImagePreviewAndSortProps> = ({
     <div className="space-y-2">
       <Label className="text-slate-300">图片预览和排序</Label>
       <div
-        className={`flex flex-wrap gap-2 p-2 rounded-md min-h-[100px]`}
+        className="flex flex-wrap gap-2 p-2 rounded-md min-h-[100px]"
         onDragOver={handleDragOver}
-        onDragLeave={() => setIsDraggingOver(false)}
       >
         {selectedImages.map((image, index) => (
           <div
-            key={image.name + index}
+            key={`${image.name}-${index}`}
             draggable
             onDragStart={(e) => handleDragStart(e, index)}
             onDragEnter={() => handleDragEnter(index)}
             onDragEnd={handleDragEnd}
             onDragOver={(e) => e.preventDefault()}
             className={`relative w-24 h-24 rounded-md overflow-hidden group cursor-grab transition-all duration-200 ease-in-out ${
-              dragging && dragOverItem.current === index && dragItem.current !== index
+              dragging && dragOverItem === index && dragItem.current !== index
                 ? 'ring-2 ring-blue-500'
                 : ''
             }`}
