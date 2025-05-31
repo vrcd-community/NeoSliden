@@ -72,7 +72,7 @@ export const PdfToImageConverter: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-8">
       <Card className="bg-black/60 border-0 shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl text-slate-200">PDF to Image Converter</CardTitle>
+          <CardTitle className="text-xl text-slate-200">PDF转图片</CardTitle>
           <CardDescription className="text-slate-400">Powered By PDF.js</CardDescription>
         </CardHeader>
 
